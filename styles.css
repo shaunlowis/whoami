@@ -2,8 +2,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Courier Prime', monospace;
-  background-color: #121212;
-  color: #e0e0e0;
+  background-color: #252422;
+  color: #FFFCF2;
   height: 100vh;
   display: flex;
   align-items: center;
@@ -12,17 +12,24 @@ body {
 
 main {
   text-align: center;
+  border: 2px solid #403D39;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: #252422;
+  width: 90%;
+  max-width: 600px;
 }
 
 h1 {
   font-size: 3rem;
+  color: #EB5E28;
   margin-bottom: 2rem;
-  letter-spacing: 1px;
 }
 
 ul {
   list-style: none;
   padding: 0;
+  margin-bottom: 2rem;
 }
 
 li {
@@ -30,12 +37,46 @@ li {
 }
 
 a {
-  color: #90caf9;
+  color: #CCC5B9;
   text-decoration: none;
   font-size: 1.25rem;
   transition: color 0.3s ease;
 }
 
 a:hover {
-  color: #bb86fc;
+  color: #EB5E28;
+}
+
+/* --- Card preview block --- */
+.card {
+  background-color: #403D39;
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: scale(1.02);
+}
+
+.card a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-content h2 {
+  color: #EB5E28;
+  margin: 0 0 0.5rem 0;
+}
+
+.card-content p {
+  color: #FFFCF2;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.icon {
+  font-size: 2.5rem;
+  color: #EB5E28;
+  margin-bottom: 0.5rem;
 }
