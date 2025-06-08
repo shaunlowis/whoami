@@ -1,8 +1,24 @@
-body {
+/* body {
   margin: 0;
   padding: 0;
   font-family: 'Courier Prime', monospace;
   background-color: #252422;
+  color: #FFFCF2;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Courier Prime', monospace;
+  background-color: #252422; /* fallback color */
+  background-image: url('layered-waves.svg');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover; /* or contain depending on your design */
   color: #FFFCF2;
   height: 100vh;
   display: flex;
