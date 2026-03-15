@@ -2,62 +2,773 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=0.85" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shaun Lowis</title>
-  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
-  <!-- https://www.svgrepo.com/ -->
+  <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="icon" href="rocket.svg" sizes="any" type="image/svg+xml">
+  <style>
+    :root {
+      --bg:           #07090e;
+      --surface:      #0d1117;
+      --surface2:     #161b22;
+      --border:       #21262d;
+      --amber:        #f5a623;
+      --amber-dim:    rgba(245,166,35,0.10);
+      --green:        #3fb950;
+      --text:         #e6edf3;
+      --muted:        #7d8590;
+      --font:         'Courier Prime', 'Courier New', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100%;
+      overflow-x: hidden;
+      cursor: crosshair;
+    }
+
+    /* ── STARFIELD ─────────────────────────────────────────── */
+    /* position:fixed means it always fills the viewport on
+       mobile — this is what fixes the background cutout bug   */
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── LAYOUT ────────────────────────────────────────────── */
+    main {
+      position: relative;
+      z-index: 1;
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 20px 80px;
+    }
+
+    /* ── HEADER ────────────────────────────────────────────── */
+    header {
+      margin-bottom: 52px;
+      opacity: 0;
+      animation: fadeUp 0.6s 0.1s forwards;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .prompt { color: var(--amber); font-size: 1.1rem; user-select: none; }
+
+    h1 {
+      font-size: clamp(1.9rem, 6vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      user-select: none;
+      cursor: pointer;
+    }
+
+    /* clicking the name 5× triggers the dossier easter egg */
+    h1:active { color: var(--amber); }
+
+    .cursor {
+      display: inline-block;
+      width: 3px;
+      height: 1em;
+      background: var(--amber);
+      margin-left: 4px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    .tagline {
+      color: var(--muted);
+      font-size: 0.83rem;
+      margin-bottom: 28px;
+      padding-left: 28px;
+    }
+
+    /* ── NAV LINKS ─────────────────────────────────────────── */
+    nav ul {
+      list-style: none;
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      width: fit-content;
+    }
+
+    nav ul li { border-right: 1px solid var(--border); }
+    nav ul li:last-child { border-right: none; }
+
+    nav a {
+      display: block;
+      padding: 8px 18px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.83rem;
+      transition: color 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+
+    nav a:hover { color: var(--amber); background: var(--amber-dim); }
+    nav a i { margin-right: 6px; font-size: 0.78rem; }
+
+    /* ── SECTION LABEL ─────────────────────────────────────── */
+    .section-label {
+      font-size: 0.68rem;
+      color: var(--amber);
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+      margin-top: 48px;
+      opacity: 0;
+      animation: fadeUp 0.5s 0.5s forwards;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, var(--border), transparent);
+    }
+
+    /* ── CARDS ─────────────────────────────────────────────── */
+    .cards { display: flex; flex-direction: column; gap: 10px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+      transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+      opacity: 0;
+    }
+
+    /* amber left-bar reveal on hover */
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--amber);
+      transform: scaleY(0);
+      transform-origin: bottom;
+      transition: transform 0.25s;
+      z-index: 2;
+    }
+
+    .card:hover {
+      border-color: var(--amber);
+      box-shadow: 0 0 28px rgba(245,166,35,0.07), 0 6px 20px rgba(0,0,0,0.5);
+      transform: translateX(4px);
+    }
+
+    .card:hover::before { transform: scaleY(1); }
+
+    .card a {
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      align-items: stretch;
+    }
+
+    /* ── PREVIEW THUMBNAIL ─────────────────────────────────── */
+    /* Uses GitHub's built-in OG image API — no auth required.
+       Falls back gracefully if image is slow / blocked.        */
+    .card-preview {
+      width: 130px;
+      flex-shrink: 0;
+      position: relative;
+      background: var(--surface2);
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+    }
+
+    .card-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.4s, filter 0.3s;
+      filter: saturate(0.6) brightness(0.8);
+    }
+
+    .card:hover .card-preview img {
+      filter: saturate(1) brightness(1);
+    }
+
+    .card-preview img.loaded { opacity: 1; }
+
+    .shimmer {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--surface2) 25%, #1c2330 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.8s infinite;
+      transition: opacity 0.3s;
+    }
+
+    .shimmer.hidden { opacity: 0; pointer-events: none; }
+
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* ── CARD BODY ─────────────────────────────────────────── */
+    .card-body {
+      padding: 16px 16px;
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .card-title-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .card-icon { color: var(--amber); font-size: 0.82rem; opacity: 0.85; }
+
+    h2 {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+    }
+
+    .badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .badge.lang  { color: var(--green);   border-color: rgba(63,185,80,0.25); }
+    .badge.stars { color: #e3b341;        border-color: rgba(227,179,65,0.25); }
+
+    /* ── CARD ARROW ────────────────────────────────────────── */
+    .card-arrow {
+      align-self: center;
+      padding-right: 14px;
+      padding-left: 8px;
+      color: var(--border);
+      transition: color 0.2s, transform 0.2s;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    .card:hover .card-arrow {
+      color: var(--amber);
+      transform: translateX(3px);
+    }
+
+    /* ── ANIMATIONS ────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    /* ── STATUS BAR ────────────────────────────────────────── */
+    .statusbar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 5;
+      height: 24px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 18px;
+      font-size: 0.68rem;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    .sb-dot {
+      display: inline-block;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 5px;
+      animation: pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    .sb-right { margin-left: auto; }
+
+    /* ── EASTER EGG: ROCKETS ───────────────────────────────── */
+    .egg-rocket {
+      position: fixed;
+      font-size: 1.9rem;
+      z-index: 9999;
+      pointer-events: none;
+      animation: rocketUp 2.3s cubic-bezier(0.2,0.6,0.4,1) forwards;
+    }
+
+    @keyframes rocketUp {
+      0%   { transform: translateY(0)       rotate(-25deg); opacity: 1; }
+      70%  { opacity: 1; }
+      100% { transform: translateY(-115vh) translateX(60px) rotate(-45deg); opacity: 0; }
+    }
+
+    /* ── EASTER EGG: TERMINAL OVERLAY ─────────────────────── */
+    .egg-terminal {
+      position: fixed;
+      inset: 0;
+      background: rgba(7,9,14,0.96);
+      z-index: 9998;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s;
+      cursor: pointer;
+    }
+
+    /* CRT scanlines */
+    .egg-terminal::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,0,0,0.05) 3px, rgba(0,0,0,0.05) 4px
+      );
+      pointer-events: none;
+    }
+
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+    .terminal-box {
+      font-family: var(--font);
+      font-size: clamp(0.78rem, 2.5vw, 0.88rem);
+      color: var(--green);
+      max-width: 480px;
+      width: 90%;
+      padding: 32px 36px;
+      border: 1px solid rgba(63,185,80,0.5);
+      box-shadow: 0 0 50px rgba(63,185,80,0.08), inset 0 0 60px rgba(63,185,80,0.02);
+    }
+
+    .terminal-box p { margin: 3px 0; line-height: 1.65; }
+    .t-dim   { color: rgba(63,185,80,0.4); }
+    .t-hi    { color: #e6edf3; }
+    .t-amber { color: var(--amber); }
+    .t-hint  { margin-top: 18px !important; font-size: 0.72rem; color: rgba(63,185,80,0.35); }
+
+    /* ── MOBILE ────────────────────────────────────────────── */
+    @media (max-width: 520px) {
+      main { padding: 40px 14px 56px; }
+
+      nav ul { width: 100%; }
+      nav ul li { flex: 1; }
+      nav a { padding: 8px 10px; text-align: center; font-size: 0.78rem; }
+      nav a span { display: none; }   /* hide text, show only icons */
+
+      .card-preview { width: 88px; }
+      .statusbar { display: none; }
+    }
+
+    @media (max-width: 360px) {
+      /* very small phones: hide previews entirely */
+      .card-preview { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <main>
-    <h1>Shaun Lowis</h1>
-    <ul>
-      <li><a href="https://github.com/shaunlowis" target="_blank">GitHub</a></li>
-      <li><a href="https://linkedin.com/in/shaunlowis" target="_blank">LinkedIn</a></li>
-      <li><a href="/documents/CV.pdf" target="_blank">Resume</a></li>
-    </ul>
 
-    <section class="card">
-      <a href="https://shaunlowis.github.io/rocketeering/" target="_blank">
-        <div class="card-content">
-          <i class="fas fa-rocket icon"></i>
-          <h2>Rocketeering</h2>
-          <p>Model rocketry, launches, and mission tracking tools.</p>
-        </div>
-      </a>
-    </section>
+<!-- fixed canvas = always covers the full viewport, even on mobile -->
+<canvas id="starfield"></canvas>
 
-    <section class="card">
-      <a href="https://github.com/shaunlowis/UNET_buildings" target="_blank">
-        <div class="card-content">
-          <i class="fas fa-brain icon"></i>
-          <h2>U-Net Buildings</h2>
-          <p>Satellite segmentation using U-Net deep learning.</p>
-        </div>
-      </a>
-    </section>
+<main>
+  <header>
+    <div class="header-top">
+      <span class="prompt">~$</span>
+      <!-- click this 5× quickly to unlock the dossier easter egg -->
+      <h1 id="name-title">Shaun Lowis</h1><span class="cursor"></span>
+    </div>
+    <p class="tagline">// engineer · rocketeer · builder of things</p>
+    <nav>
+      <ul>
+        <li><a href="https://github.com/shaunlowis" target="_blank"><i class="fab fa-github"></i><span>GitHub</span></a></li>
+        <li><a href="https://linkedin.com/in/shaunlowis" target="_blank"><i class="fab fa-linkedin"></i><span>LinkedIn</span></a></li>
+        <li><a href="/documents/CV.pdf" target="_blank"><i class="fas fa-file-alt"></i><span>Resume</span></a></li>
+      </ul>
+    </nav>
+  </header>
 
-    <section class="card">
-      <a href="https://github.com/shaunlowis/orbit-mech" target="_blank">
-        <div class="card-content">
-          <i class="fas fa-satellite icon"></i>
-          <h2>Orbital Mechanics</h2>
-          <p>Physics-based orbit calculators and visualizations.</p>
-        </div>
-      </a>
-    </section>
+  <div class="section-label">projects</div>
 
-    <section class="card">
+  <div class="cards">
+
+    <div class="card" data-repo="home-diy">
       <a href="https://shaunlowis.github.io/home-diy/" target="_blank">
-        <div class="card-content">
-          <i class="fas fa-tools icon"></i>
-          <h2>Home DIY</h2>
-          <p>Woodwork, electronics, and custom desk setups.</p>
+        <div class="card-preview">
+          <div class="shimmer"></div>
+          <img src="https://opengraph.githubassets.com/1/shaunlowis/home-diy" alt="" loading="lazy">
         </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <i class="fas fa-tools card-icon"></i>
+            <h2>Home DIY</h2>
+          </div>
+          <p class="card-desc">Projects done in my free time!</p>
+          <div class="card-badges">
+            <span class="badge lang" data-field="lang"></span>
+            <span class="badge stars" data-field="stars"></span>
+            <span class="badge" data-field="updated"></span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right card-arrow"></i>
       </a>
-    </section>
+    </div>
 
-  </main>
+    <div class="card" data-repo="rocketeering">
+      <a href="https://shaunlowis.github.io/rocketeering/" target="_blank">
+        <div class="card-preview">
+          <div class="shimmer"></div>
+          <img src="https://opengraph.githubassets.com/1/shaunlowis/rocketeering" alt="" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <i class="fas fa-rocket card-icon"></i>
+            <h2>Rocketeering</h2>
+          </div>
+          <p class="card-desc">Custom flight computer for a rocket alongside flight data gathered.</p>
+          <div class="card-badges">
+            <span class="badge lang" data-field="lang"></span>
+            <span class="badge stars" data-field="stars"></span>
+            <span class="badge" data-field="updated"></span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right card-arrow"></i>
+      </a>
+    </div>
+
+    <div class="card" data-repo="UNET_buildings">
+      <a href="https://github.com/shaunlowis/UNET_buildings" target="_blank">
+        <div class="card-preview">
+          <div class="shimmer"></div>
+          <img src="https://opengraph.githubassets.com/1/shaunlowis/UNET_buildings" alt="" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <i class="fas fa-brain card-icon"></i>
+            <h2>U-Net Buildings</h2>
+          </div>
+          <p class="card-desc">Identifying buildings in satellite imagery using U-Net deep learning.</p>
+          <div class="card-badges">
+            <span class="badge lang" data-field="lang"></span>
+            <span class="badge stars" data-field="stars"></span>
+            <span class="badge" data-field="updated"></span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right card-arrow"></i>
+      </a>
+    </div>
+
+    <div class="card" data-repo="orbit-mech">
+      <a href="https://github.com/shaunlowis/orbit-mech" target="_blank">
+        <div class="card-preview">
+          <div class="shimmer"></div>
+          <img src="https://opengraph.githubassets.com/1/shaunlowis/orbit-mech" alt="" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <i class="fas fa-satellite card-icon"></i>
+            <h2>Orbital Mechanics</h2>
+          </div>
+          <p class="card-desc">Postgraduate project on Earth–Moon orbit transfer planning and simulation.</p>
+          <div class="card-badges">
+            <span class="badge lang" data-field="lang"></span>
+            <span class="badge stars" data-field="stars"></span>
+            <span class="badge" data-field="updated"></span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right card-arrow"></i>
+      </a>
+    </div>
+
+    <!-- Music: uses YouTube thumbnail instead of GitHub OG image -->
+    <div class="card">
+      <a href="https://www.youtube.com/watch?v=NBbItgNEv6c" target="_blank">
+        <div class="card-preview">
+          <div class="shimmer"></div>
+          <img src="https://img.youtube.com/vi/NBbItgNEv6c/mqdefault.jpg" alt="" loading="lazy">
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <i class="fas fa-music card-icon"></i>
+            <h2>Music</h2>
+          </div>
+          <p class="card-desc">Cover of Every Breaking Wave by U2.</p>
+          <div class="card-badges">
+            <span class="badge" style="color:#ff4444;border-color:rgba(255,68,68,0.25)"><i class="fab fa-youtube" style="margin-right:4px"></i>YouTube</span>
+          </div>
+        </div>
+        <i class="fas fa-chevron-right card-arrow"></i>
+      </a>
+    </div>
+
+  </div>
+</main>
+
+<!-- minimal status bar (hidden on mobile) -->
+<div class="statusbar">
+  <span><span class="sb-dot"></span>online</span>
+  <span>NZ</span>
+  <span class="sb-right" id="sb-clock"></span>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STARFIELD
+// Using position:fixed canvas so the background always
+// fills the viewport — this fixes the mobile cutout bug.
+// ═══════════════════════════════════════════════════════
+const canvas = document.getElementById('starfield');
+const ctx    = canvas.getContext('2d');
+let stars    = [];
+
+function resizeCanvas() {
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function initStars() {
+  resizeCanvas();
+  stars = Array.from({ length: 180 }, () => ({
+    x:       Math.random() * canvas.width,
+    y:       Math.random() * canvas.height,
+    r:       Math.random() * 1.0 + 0.2,
+    speed:   Math.random() * 0.15 + 0.04,
+    opacity: Math.random() * 0.55 + 0.2,
+    phase:   Math.random() * Math.PI * 2   // for twinkle
+  }));
+}
+
+function drawStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const t = performance.now() * 0.001;
+  stars.forEach(s => {
+    const op = s.opacity * (0.75 + 0.25 * Math.sin(t * 0.7 + s.phase));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(195,215,255,${op})`;
+    ctx.fill();
+    s.y += s.speed;
+    if (s.y > canvas.height + 2) {
+      s.y = -2;
+      s.x = Math.random() * canvas.width;
+    }
+  });
+  requestAnimationFrame(drawStars);
+}
+
+window.addEventListener('resize', initStars);
+initStars();
+requestAnimationFrame(drawStars);
+
+// ═══════════════════════════════════════════════════════
+// CARD ENTRANCE ANIMATIONS (staggered)
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.card').forEach((card, i) => {
+  card.style.animation = `fadeUp 0.5s ${0.55 + i * 0.12}s forwards`;
+});
+
+// ═══════════════════════════════════════════════════════
+// IMAGE LOAD — remove shimmer once image is ready
+// ═══════════════════════════════════════════════════════
+document.querySelectorAll('.card-preview img').forEach(img => {
+  const shimmer = img.previousElementSibling;
+  function onLoad() {
+    img.classList.add('loaded');
+    shimmer && shimmer.classList.add('hidden');
+  }
+  if (img.complete && img.naturalWidth) onLoad();
+  else {
+    img.addEventListener('load',  onLoad);
+    img.addEventListener('error', () => shimmer && shimmer.classList.add('hidden'));
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// GITHUB API — live repo stats (stars, language, date)
+// Public API: 60 req/hour, no auth needed for public repos
+// ═══════════════════════════════════════════════════════
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+async function fetchRepo(repoName, cardEl) {
+  try {
+    const res = await fetch(`https://api.github.com/repos/shaunlowis/${repoName}`);
+    if (!res.ok) return;
+    const d = await res.json();
+
+    const set = (field, text) => {
+      const el = cardEl.querySelector(`[data-field="${field}"]`);
+      if (el) { el.textContent = text; el.style.display = text ? '' : 'none'; }
+    };
+
+    set('lang',    d.language || '');
+    set('stars',   d.stargazers_count != null ? `★ ${d.stargazers_count}` : '');
+    if (d.pushed_at) {
+      const dt = new Date(d.pushed_at);
+      set('updated', `${MONTHS[dt.getMonth()]} ${dt.getFullYear()}`);
+    }
+  } catch (_) { /* silently ignore — no auth, rate limits, etc. */ }
+}
+
+document.querySelectorAll('.card[data-repo]').forEach(card => {
+  fetchRepo(card.dataset.repo, card);
+});
+
+// ═══════════════════════════════════════════════════════
+// STATUS BAR CLOCK (NZ time)
+// ═══════════════════════════════════════════════════════
+function updateClock() {
+  const el = document.getElementById('sb-clock');
+  if (!el) return;
+  el.textContent = new Date().toLocaleTimeString('en-NZ', {
+    hour: '2-digit', minute: '2-digit', timeZone: 'Pacific/Auckland'
+  });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ═══════════════════════════════════════════════════════
+// EASTER EGG HELPERS
+// ═══════════════════════════════════════════════════════
+function launchRockets(count = 6) {
+  for (let i = 0; i < count; i++) {
+    setTimeout(() => {
+      const r    = document.createElement('div');
+      r.className = 'egg-rocket';
+      r.textContent = '🚀';
+      r.style.left   = `${4 + Math.random() * 88}vw`;
+      r.style.bottom = `-60px`;
+      document.body.appendChild(r);
+      r.addEventListener('animationend', () => r.remove());
+    }, i * 220);
+  }
+}
+
+function showTerminal(html) {
+  const ov = document.createElement('div');
+  ov.className = 'egg-terminal';
+  ov.innerHTML  = `<div class="terminal-box">${html}</div>`;
+  ov.addEventListener('click', () => ov.remove());
+  document.addEventListener('keydown', function esc(e) {
+    if (e.key === 'Escape') { ov.remove(); document.removeEventListener('keydown', esc); }
+  });
+  document.body.appendChild(ov);
+}
+
+// ═══════════════════════════════════════════════════════
+// EASTER EGG 1: Konami Code → rocket swarm
+// ↑ ↑ ↓ ↓ ← → ← → B A
+// ═══════════════════════════════════════════════════════
+const KONAMI = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown',
+                'ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+let ki = 0;
+
+document.addEventListener('keydown', e => {
+  ki = e.key === KONAMI[ki] ? ki + 1 : (e.key === KONAMI[0] ? 1 : 0);
+  if (ki === KONAMI.length) {
+    ki = 0;
+    launchRockets(10);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// EASTER EGG 2: Click name 5× quickly → classified dossier
+// ═══════════════════════════════════════════════════════
+let nameClicks = 0, nameTimer;
+document.getElementById('name-title').addEventListener('click', () => {
+  nameClicks++;
+  clearTimeout(nameTimer);
+  nameTimer = setTimeout(() => { nameClicks = 0; }, 900);
+  if (nameClicks >= 5) {
+    nameClicks = 0;
+    showTerminal(`
+      <p class="t-dim">// CLASSIFIED PERSONNEL FILE ///</p>
+      <p class="t-dim">─────────────────────────────────</p>
+      <p>&nbsp;</p>
+      <p>NAME        <span class="t-hi">Shaun Lowis</span></p>
+      <p>CLEARANCE   <span class="t-amber">LEVEL 5 — ROCKETEER</span></p>
+      <p>SPECIALITY  Orbital mechanics · Deep learning</p>
+      <p>            Flight computers · Home improvisation</p>
+      <p>LOCATION    [REDACTED — somewhere with good hills]</p>
+      <p>RISK LEVEL  Will build a flight computer for a</p>
+      <p>            rocket if left unsupervised</p>
+      <p>&nbsp;</p>
+      <p>STATUS      <span class="t-amber">█ ACTIVELY BUILDING</span></p>
+      <p>&nbsp;</p>
+      <p class="t-hint">&gt; click anywhere or press Esc to close</p>
+    `);
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// EASTER EGG 3: Keyboard secrets
+//   type "launch" anywhere → rocket swarm
+//   type "sudo"   anywhere → you know the meme
+// ═══════════════════════════════════════════════════════
+let keyBuf = '';
+document.addEventListener('keypress', e => {
+  // don't capture if user is in an input/textarea
+  if (['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+  keyBuf = (keyBuf + e.key).slice(-10);
+
+  if (keyBuf.endsWith('launch')) {
+    keyBuf = '';
+    launchRockets(7);
+  }
+
+  if (keyBuf.endsWith('sudo')) {
+    keyBuf = '';
+    showTerminal(`
+      <p>&gt; sudo make me a sandwich</p>
+      <p>&nbsp;</p>
+      <p><span class="t-amber">shaun is not in the sudoers file.</span></p>
+      <p>This incident will be reported.</p>
+      <p>&nbsp;</p>
+      <p class="t-hint">&gt; click anywhere to dismiss</p>
+    `);
+  }
+});
+</script>
 </body>
 </html>
